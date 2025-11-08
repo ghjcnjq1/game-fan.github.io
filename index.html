@@ -3,230 +3,388 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Telegram WebApp — Rewarded Ad Demo</title>
+  <title>Telegram WebApp — Rewarded Ad Vault</title>
   <style>
-    :root{font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;}
-    body{display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;background:#f5f7fb}
-    .card{width:min(720px,96%);background:white;border-radius:12px;padding:20px;box-shadow:0 8px 30px rgba(20,30,60,0.08)}
-    h1{margin:0 0 8px;font-size:20px}
-    p{color:#475569;margin:6px 0}
-    .balance{font-weight:700;font-size:28px;margin:12px 0}
-    .btn{display:inline-block;padding:10px 16px;border-radius:10px;border:0;background:#2563eb;color:white;font-weight:600;cursor:pointer}
-    .btn[disabled]{opacity:.5;cursor:default}
-    .note{font-size:13px;color:#6b7280;margin-top:8px}
-    .log{background:#0f172a;color:white;padding:10px;border-radius:8px;margin-top:12px;white-space:pre-wrap;font-family:monospace;font-size:13px;max-height:160px;overflow:auto}
-    .ad-frame{border-radius:8px;background:#111827;color:white;padding:18px;text-align:center;margin-top:12px}
-    .ad-timer{font-size:24px;font-weight:700}
+    :root{
+      --bg:#0f1724; --card:#0b1220; --muted:#94a3b8; --accent:#7c3aed; --accent-2:#06b6d4; --glass:rgba(255,255,255,0.04);
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+    html,body{height:100%;margin:0}
+    body{background:linear-gradient(180deg,#071023 0%, #071a2b 100%);display:flex;align-items:center;justify-content:center;padding:24px;color:#e6eef8}
+    .wrap{width:min(980px,98%);max-width:980px}
+
+    .grid{display:grid;grid-template-columns:420px 1fr;gap:20px}
+
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.04);border-radius:14px;padding:18px;box-shadow:0 10px 30px rgba(2,6,23,0.6)}
+
+    header{display:flex;align-items:center;gap:12px}
+    .logo{width:56px;height:56px;background:linear-gradient(135deg,var(--accent),var(--accent-2));border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:700}
+    h1{margin:0;font-size:18px}
+    p.lead{margin:6px 0 0;color:var(--muted);font-size:13px}
+
+    .user{margin-top:12px;padding:10px;border-radius:10px;background:var(--glass);display:flex;align-items:center;justify-content:space-between}
+    .user .meta{display:flex;gap:10px;align-items:center}
+    .avatar{width:44px;height:44px;border-radius:9px;background:linear-gradient(180deg,#0ea5a5,#0ea5a5);display:flex;align-items:center;justify-content:center;font-weight:700}
+    .username{font-weight:700}
+    .userid{color:var(--muted);font-size:12px}
+
+    .balance{margin-top:14px;font-size:22px;font-weight:800;display:flex;align-items:center;gap:12px}
+    .balance .coin{background:linear-gradient(90deg,#ffd166,#f97316);padding:6px 10px;border-radius:8px;color:#081018;font-weight:800}
+
+    .box{margin-top:14px;padding:14px;border-radius:12px;background:linear-gradient(90deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.02)}
+
+    .watch-btn{display:inline-flex;align-items:center;gap:10px;padding:12px 16px;border-radius:12px;background:linear-gradient(90deg,var(--accent),var(--accent-2));border:0;color:white;font-weight:800;cursor:pointer}
+    .watch-btn[disabled]{opacity:.45;cursor:default}
+    .small{font-size:13px;color:var(--muted)}
+
+    .ad-frame{margin-top:12px;border-radius:10px;background:linear-gradient(180deg,#061022,#04101b);padding:12px;border:1px solid rgba(255,255,255,0.03);text-align:center}
+    .ad-timer{font-size:28px;font-weight:800}
+    .skip{margin-top:8px}
+
+    /* right column */
+    .panel{padding:18px}
+    .panel h3{margin:0 0 8px}
+    .rules{color:var(--muted);font-size:13px;line-height:1.5}
+
+    .progress-wrap{margin-top:12px}
+    .bar{height:12px;background:rgba(255,255,255,0.06);border-radius:999px;overflow:hidden}
+    .bar > i{display:block;height:100%;background:linear-gradient(90deg,#34d399,#06b6d4);width:0%}
+    .stat-grid{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+    .stat{flex:1 1 120px;padding:10px;border-radius:10px;background:rgba(255,255,255,0.02);font-size:13px}
+
+    .log{margin-top:14px;padding:10px;border-radius:10px;background:#021026;color:#9ec5d9;font-family:monospace;font-size:13px;max-height:180px;overflow:auto}
+
+    footer{margin-top:12px;color:var(--muted);font-size:12px}
+
+    /* responsive */
+    @media (max-width:880px){.grid{grid-template-columns:1fr;}.card{padding:14px}}
   </style>
 </head>
 <body>
-  <div class="card" role="main">
-    <h1>Rewarded Ad — демо для Telegram WebApp</h1>
-    <p>Эта страница демонстрирует поток: открыть WebApp из Telegram → посмотреть рекламный ролик → сервер получает подтверждение и начисляет внутриигровую валюту.</p>
+  <div class="wrap">
+    <div class="grid">
+      <div class="card">
+        <header>
+          <div class="logo">Rv</div>
+          <div>
+            <h1>Rewarded Ad Vault</h1>
+            <p class="lead">Единственный способ заработать внутриигровую валюту — смотреть рекламные ролики. Система сделана сложно: лимиты, уровни наград и убывающая отдача, чтобы предотвратить накрутки и удлинить путь прокачки.</p>
+          </div>
+        </header>
 
-    <div>
-      <div>Пользователь:</div>
-      <div id="userInfo">Не инициализирован</div>
+        <div class="user">
+          <div class="meta">
+            <div class="avatar" id="avatar">U</div>
+            <div>
+              <div class="username" id="u_name">Не инициализирован</div>
+              <div class="userid" id="u_id">id: —</div>
+            </div>
+          </div>
+          <div style="text-align:right">
+            <div class="small">Язык</div>
+            <div class="small" id="u_lang">—</div>
+          </div>
+        </div>
+
+        <div class="balance">
+          <div>Баланс</div>
+          <div class="coin" id="balanceCoin">—</div>
+        </div>
+
+        <div class="box">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+            <div>
+              <div style="font-weight:700">Посмотреть рекламу</div>
+              <div class="small">Единственный источник Coin. Чем сложнее — тем больше шанс получить бонус.</div>
+            </div>
+            <div style="text-align:right">
+              <div class="small">Макс в день</div>
+              <div style="font-weight:800" id="dailyCap">—</div>
+            </div>
+          </div>
+
+          <div style="margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+            <button id="watchBtn" class="watch-btn">▶ Посмотреть — получить</button>
+            <button id="closeBtn" class="watch-btn" style="background:#ef4444">✕ Закрыть</button>
+            <div class="small" id="nextInfo">Готово к просмотру</div>
+          </div>
+
+          <div id="adContainer"></div>
+        </div>
+
+        <div class="log" id="log">[лог]</div>
+        <footer>Подсказка: система даёт награды слоями — частые короткие просмотры дают меньше, редкие полные просмотры дают шанс на буст.</footer>
+      </div>
+
+      <div class="card panel">
+        <h3>Механика наград</h3>
+        <div class="rules" id="rules">
+          <ul>
+            <li>Награду можно получить только за верифицированные просмотры рекламы (server-to-server проверка).</li>
+            <li>Есть дневной лимит наград — защищает от массовых просмотров.</li>
+            <li>Динамическая система наград: базовая награда — низкая; есть шанс критической награды при полном досмотре и редком использовании.</li>
+            <li>Убывающая отдача: слишком частые просмотры в короткий промежуток уменьшают размер награды.</li>
+            <li>Админ может регулировать коэффициенты и лимиты в панели.</li>
+          </ul>
+        </div>
+
+        <div class="progress-wrap">
+          <div class="small">Дневной прогресс</div>
+          <div class="bar" aria-hidden><i id="dayBar" style="width:0%"></i></div>
+          <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:13px;color:var(--muted)">
+            <div id="dayCount">0 просмотров</div>
+            <div id="dayMax">макс: —</div>
+          </div>
+        </div>
+
+        <div class="stat-grid">
+          <div class="stat">Cooldown: <div id="statCooldown" style="font-weight:800;">—</div></div>
+          <div class="stat">Стрик: <div id="statStreak" style="font-weight:800;">—</div></div>
+          <div class="stat">Уровень награды: <div id="statTier" style="font-weight:800;">—</div></div>
+        </div>
+
+        <h3 style="margin-top:14px">Прозрачность и безопасность</h3>
+        <div class="rules small">
+          Важно: все начисления подтверждаются сервером и проверяются подписью Telegram initData и подписью рекламной сети. Логи жалоб и спама автоматически попадают в панель админа.
+        </div>
+
+      </div>
     </div>
-
-    <div class="balance" id="balance">Баланс: —</div>
-
-    <div>
-      <button id="watchBtn" class="btn">Посмотреть рекламу — получить 50 Coin</button>
-      <button id="closeBtn" class="btn" style="background:#ef4444;margin-left:8px">Закрыть WebApp</button>
-      <div class="note">Тестовая версия: здесь показан placeholder ролика. Для продакшна замените логику на SDK вашей рекламной сети и валидацию на сервере.</div>
-    </div>
-
-    <div id="adContainer"></div>
-
-    <div class="log" id="log">Логи:
-
-</div>
   </div>
 
 <script>
 // =============================
-// Конфигурация
+// Конфигурация и правила (настройки можно синхронизировать с бэкендом)
 // =============================
-const BACKEND_VERIFY_URL = 'https://your-backend.example.com/api/ad_complete'; // <- замените на ваш сервер
-const REWARD_AMOUNT = 50; // сколько монет давать за просмотр
-const COOLDOWN_SECONDS = 30; // локальный cooldown (доп. защита от мульти-кликов)
+const BACKEND_VERIFY_URL = 'https://your-backend.example.com/api/ad_complete';
+const BALANCE_URL = '/api/get_balance';
 
-// =============================
-// Телеграм WebApp init
-// =============================
-// В WebApp Telegram автоматически вставляет объект window.Telegram.WebApp
-// Однако в режиме превью в браузере этого объекта нет — код поддерживает fallback для локальной отладки.
+// Базовые параметры экономики (можно менять на сервере)
+const ECON = {
+  baseReward: 20,           // базовые монеты
+  tierMultiplier: [1,1.5,2.5], // множители по уровням (обычный, редкий, крит)
+  dayCap: 8,                // максимум начислений в день
+  minWatchSeconds: 8,       // минимальное время для валидного просмотра
+  cooldownSeconds: 45,      // минимальный интервал между просмотрами
+  diminishingWindow: 600,   // сек — окно убывания (частые просмотры внутри этого окна снижают награду)
+  diminishingFactor: 0.6    // умножается на награду если frequent
+};
 
+// Локальное состояние
+let tg = window.Telegram ? window.Telegram.WebApp : null;
+let initData = null; // telegram initData (подписанный)
+let user = null;
+let balance = 0;
+let dailyCount = 0; // просмотры сегодня, подтверждённые сервером
+let lastWatchTs = 0; // timestamp ms
+let streak = 0; // сколько досмотров подряд (полные просмотры)
+
+// UI
 const logEl = document.getElementById('log');
+const watchBtn = document.getElementById('watchBtn');
+const closeBtn = document.getElementById('closeBtn');
+const adContainer = document.getElementById('adContainer');
+
 function log(...args){
   const line = '[' + new Date().toLocaleTimeString() + '] ' + args.join(' ');
-  logEl.textContent += '\n' + line;
-  logEl.scrollTop = logEl.scrollHeight;
+  logEl.textContent = line + '
+' + logEl.textContent;
   console.log(...args);
 }
 
-let tg = window.Telegram ? window.Telegram.WebApp : null;
-let initData = null;
-let user = null;
-let balance = 0;
-
+// =============================
+// Инициализация WebApp
+// =============================
 function initWebApp(){
   if(tg){
-    // Официальный WebApp
     initData = tg.initData || null;
     try{ user = tg.initDataUnsafe ? tg.initDataUnsafe.user : null; } catch(e){ user = null }
-    if(user) document.getElementById('userInfo').textContent = `${user.first_name || ''} ${user.last_name || ''} (@${user.username || '-'}) — id:${user.id}`;
-    else document.getElementById('userInfo').textContent = 'Невозможно получить user (в режиме превью используйте локальный мок)';
+    if(user){
+      document.getElementById('u_name').textContent = `${user.first_name || ''} ${user.last_name || ''}`;
+      document.getElementById('u_id').textContent = `id: ${user.id}`;
+      document.getElementById('u_lang').textContent = tg.initDataUnsafe ? tg.initDataUnsafe.user.language_code || '-' : '-';
+      document.getElementById('avatar').textContent = (user.first_name||'U')[0].toUpperCase();
+    }
     tg.expand();
-    log('Инициализация WebApp через Telegram.', JSON.stringify(tg.initDataUnsafe || {}));
+    log('WebApp инициализирован через Telegram');
   } else {
-    // Fallback — локальная отладка
-    user = { id: 123456789, first_name: 'Тест', username: 'testuser' };
-    initData = 'local_preview_initdata';
-    document.getElementById('userInfo').textContent = `${user.first_name} (@${user.username}) — id:${user.id} (локальный режим)`;
-    log('Запущено в локальном режиме (preview) — Telegram WebApp объект не найден.');
+    // preview mode
+    user = { id: 123456789, first_name: 'Тест', username: 'test', language_code: 'ru' };
+    document.getElementById('u_name').textContent = 'Тест (preview)';
+    document.getElementById('u_id').textContent = 'id: 123456789';
+    document.getElementById('u_lang').textContent = 'ru';
+    document.getElementById('avatar').textContent = 'T';
+    initData = 'preview';
+    log('Режим предпросмотра (Telegram WebApp объект не обнаружен)');
   }
-  // Запросим баланс у сервера (или подставим локальный для демо)
-  fetchBalanceFromServer();
+  // получить баланс + настройки экономки с сервера
+  fetchServerState();
 }
 
-// =============================
-// Баланс
-// =============================
-async function fetchBalanceFromServer(){
+async function fetchServerState(){
   try{
-    // Для безопасности в продакшне отправляйте initData на backend, чтобы он проверил подпись Telegram
-    // Здесь — демонстрация: попытка получить баланс с бэка
-    const resp = await fetch('/api/get_balance', { // <- замените endpoint
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ telegram_id: user ? user.id : null, initData })
-    });
+    // В продакшн: отправляйте initData на backend для проверки подписи
+    const resp = await fetch(BALANCE_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({telegram_id: user ? user.id : null, initData}) });
     if(resp.ok){
       const data = await resp.json();
       balance = data.balance || 0;
-      updateBalanceUI();
-      log('Баланс получен от сервера:', balance);
+      dailyCount = data.dailyCount || 0;
+      lastWatchTs = data.lastWatchTs || 0;
+      streak = data.streak || 0;
+      if(data.econ){
+        // синхронизировать параметры экономики
+        Object.assign(ECON, data.econ);
+      }
+      updateUI();
+      log('Серверная синхронизация успешна');
     } else {
-      log('Баланс: ответ сервера не OK (использую локальный).', resp.status);
-      balance = 0;
-      updateBalanceUI();
+      // fallback
+      updateUI();
+      log('Не удалось получить состояние от сервера — использую локальные значения');
     }
   }catch(e){
-    log('Ошибка при получении баланса (использую локальный):', e.message);
-    balance = 0;
-    updateBalanceUI();
+    updateUI();
+    log('Ошибка при получении состояния с сервера:', e.message || e);
   }
 }
 
-function updateBalanceUI(){
-  document.getElementById('balance').textContent = `Баланс: ${balance} Coin`;
+function updateUI(){
+  document.getElementById('balanceCoin').textContent = `${balance} Coin`;
+  document.getElementById('dailyCap').textContent = `${ECON.dayCap} просмотров`;
+  document.getElementById('dayCount').textContent = `${dailyCount} просмотров`;
+  document.getElementById('dayMax').textContent = `макс: ${ECON.dayCap}`;
+  const pct = Math.min(100, Math.round((dailyCount/ECON.dayCap)*100));
+  document.getElementById('dayBar').style.width = pct + '%';
+  document.getElementById('statCooldown').textContent = `${ECON.cooldownSeconds}s`;
+  document.getElementById('statStreak').textContent = streak;
+  document.getElementById('statTier').textContent = getTierName(calculateTier());
+
+  const now = Date.now();
+  const ready = (now - lastWatchTs) / 1000 >= ECON.cooldownSeconds && dailyCount < ECON.dayCap;
+  watchBtn.disabled = !ready;
+  document.getElementById('nextInfo').textContent = ready ? 'Готово к просмотру' : getNextInfo();
+  watchBtn.innerHTML = `▶ Посмотреть — получить ${formatPotentialReward()} Coin`;
+}
+
+function getNextInfo(){
+  const now = Date.now();
+  const rem = Math.max(0, Math.ceil((ECON.cooldownSeconds*1000 - (now - lastWatchTs))/1000));
+  if(dailyCount >= ECON.dayCap) return 'Дневной лимит достигнут';
+  if(rem>0) return `Следующий просмотр через ${rem}s`;
+  return 'Готово';
+}
+
+function formatPotentialReward(){
+  // отображаем возможное количество с учётом текущего состояния
+  const base = ECON.baseReward;
+  const tier = calculateTier();
+  const mult = ECON.tierMultiplier[tier];
+  const frequent = isFrequent();
+  const reward = Math.floor(base * mult * (frequent ? ECON.diminishingFactor : 1));
+  return reward;
+}
+
+function calculateTier(){
+  // простая логика: высокий стрик -> выше шанс редкой награды
+  if(streak >= 5) return 2; // крит
+  if(streak >= 2) return 1; // редкий
+  return 0; // обычный
+}
+
+function getTierName(t){ return ['Обычный','Редкий','Крит'].slice(0,3)[t] || 'Обычный'; }
+
+function isFrequent(){
+  // если последний просмотр был в окне diminishingWindow — считаем frequent
+  const now = Date.now();
+  return (now - lastWatchTs) <= ECON.diminishingWindow*1000;
 }
 
 // =============================
 // Просмотр рекламы (демо)
 // =============================
-let cooldownUntil = 0;
-const watchBtn = document.getElementById('watchBtn');
-const closeBtn = document.getElementById('closeBtn');
-const adContainer = document.getElementById('adContainer');
-
 watchBtn.addEventListener('click', onWatchClicked);
-closeBtn.addEventListener('click', () => { if(tg) tg.close(); else log('Закрытие WebApp: симуляция.');});
+closeBtn.addEventListener('click', ()=>{ if(tg) tg.close(); else log('Закрытие WebApp (preview)'); });
 
 async function onWatchClicked(){
-  const now = Date.now()/1000;
-  if(now < cooldownUntil){
-    const wait = Math.ceil(cooldownUntil - now);
-    log(`Нельзя смотреть рекламу ещё ${wait}s — локальный cooldown.`);
-    return;
-  }
+  const now = Date.now();
+  if(dailyCount >= ECON.dayCap){ log('Дневной лимит достигнут'); updateUI(); return; }
+  if((now - lastWatchTs)/1000 < ECON.cooldownSeconds){ log('Cooldown активен'); updateUI(); return; }
+
   watchBtn.disabled = true;
   try{
-    // Откроем placeholder "рекламы" — в реальной конструкции здесь будет SDK провайдера
-    await playPlaceholderAd();
-    // После успешного просмотра — отправляем подтверждение на сервер
-    await sendAdCompleteToServer({ provider: 'demo', ad_id: 'demo_ad_001', watched_seconds: 15, reward: REWARD_AMOUNT });
+    // Показываем placeholder ad
+    const watchedSeconds = await playPlaceholderAd(); // возвращает фактическое время просмотра
+
+    // Собираем событие и отправляем на сервер
+    const adEvent = {
+      provider: 'demo',
+      ad_id: 'demo_ad_001',
+      watched_seconds: watchedSeconds,
+      client_ts: new Date().toISOString()
+    };
+
+    const serverResp = await sendAdCompleteToServer(adEvent);
+    if(serverResp && serverResp.success){
+      // обновляем локальные значения из ответа сервера
+      balance = serverResp.new_balance !== undefined ? serverResp.new_balance : balance + serverResp.reward || 0;
+      dailyCount = serverResp.dailyCount !== undefined ? serverResp.dailyCount : dailyCount + 1;
+      lastWatchTs = serverResp.lastWatchTs || Date.now();
+      streak = serverResp.streak !== undefined ? serverResp.streak : (watchedSeconds >= ECON.minWatchSeconds ? streak+1 : 0);
+      log('Начислено:', serverResp.reward || formatPotentialReward(), 'новый баланс', balance);
+    } else {
+      log('Сервер не подтвердил начисление', JSON.stringify(serverResp));
+    }
   }catch(e){
-    log('Ошибка при показе рекламы или верификации:', e.message || e);
+    log('Ошибка в процессе просмотра/верификации:', e.message || e);
+    alert('Не удалось завершить начисление. Попробуйте позже.');
   } finally{
-    cooldownUntil = Date.now()/1000 + COOLDOWN_SECONDS;
-    setTimeout(()=>{ watchBtn.disabled = false; }, COOLDOWN_SECONDS*1000);
+    // небольшая задержка перед обновлением UI
+    setTimeout(()=>{ updateUI(); }, 500);
   }
 }
 
 function playPlaceholderAd(){
-  return new Promise((resolve, reject)=>{
+  return new Promise((resolve,reject)=>{
     adContainer.innerHTML = '';
-    const ad = document.createElement('div');
-    ad.className = 'ad-frame';
-    ad.innerHTML = `<div style="opacity:.8">Рекламный ролик (демо)</div><div style="height:10px"></div><div class="ad-timer" id="adTimer">15</div><div style="height:10px"></div><div style="font-size:13px;opacity:.9">Нажмите "Пропустить" после 5s</div><div style="height:10px"></div>`;
-    const skipBtn = document.createElement('button');
-    skipBtn.textContent = 'Пропустить';
-    skipBtn.className = 'btn';
-    skipBtn.style.background = '#10b981';
-    skipBtn.disabled = true;
-    ad.appendChild(skipBtn);
-    adContainer.appendChild(ad);
+    const wrap = document.createElement('div'); wrap.className = 'ad-frame';
+    const title = document.createElement('div'); title.textContent = 'Рекламный ролик (демо)'; title.style.opacity = '.9'; wrap.appendChild(title);
+    const timer = document.createElement('div'); timer.className = 'ad-timer'; timer.textContent = '15'; wrap.appendChild(timer);
 
-    let t = 15; // длительность в сек
-    const timer = setInterval(()=>{
-      t -= 1;
-      const el = document.getElementById('adTimer');
-      if(el) el.textContent = t;
-      if(t <= 10) skipBtn.disabled = false; // можно пропустить после 5s (в демо — после 10s)
-      if(t <= 0){
-        clearInterval(timer);
-        adContainer.innerHTML = '';
-        log('Ролик досмотрен полностью.');
-        resolve();
-      }
-    }, 1000);
+    const skip = document.createElement('button'); skip.className='watch-btn skip'; skip.textContent='Пропустить'; skip.disabled=true; skip.style.background='#475569';
+    wrap.appendChild(skip);
+    adContainer.appendChild(wrap);
 
-    skipBtn.addEventListener('click', ()=>{
-      clearInterval(timer);
-      adContainer.innerHTML = '';
-      log('Ролик был пропущен пользователем — в демо это считается просмотром.');
-      resolve();
+    let t = 15; const minToCount = ECON.minWatchSeconds; const interval = setInterval(()=>{
+      t -= 1; timer.textContent = t; if(t <= 10) skip.disabled = false; // allow skip later
+      if(t <= 0){ clearInterval(interval); adContainer.innerHTML = ''; log('Досмотр ролика'); resolve(15); }
+    },1000);
+
+    skip.addEventListener('click', ()=>{ clearInterval(interval); adContainer.innerHTML = ''; const watched = 15 - Math.max(0, parseInt(timer.textContent)); // rough
+      // in demo we treat skip as partial watch of min(minWatchSeconds, watched)
+      const w = Math.max(minToCount, 5);
+      log('Пользователь пропустил ролик (демо) — учитываем как частичный просмотр', w);
+      resolve(w);
     });
   });
 }
 
 // =============================
-// Отправка подтверждения на сервер
+// Отправка подтверждения на сервер (server-to-server в prod)
 // =============================
 async function sendAdCompleteToServer(adEvent){
-  log('Отправляю подтверждение на сервер...', JSON.stringify(adEvent));
+  log('Отправка события на сервер...', JSON.stringify(adEvent));
   try{
-    // В prod: отправляйте вместе с подписанным initData (Telegram WebApp initData) и/или подпиской от провайдера рекламы.
-    const payload = {
-      telegram_id: user ? user.id : null,
-      initData: initData,
-      ad: adEvent,
-      client_ts: new Date().toISOString()
-    };
-    const resp = await fetch(BACKEND_VERIFY_URL, {
-      method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload)
-    });
+    const payload = { telegram_id: user ? user.id : null, initData: initData, ad: adEvent };
+    const resp = await fetch(BACKEND_VERIFY_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
     if(!resp.ok){
-      const t = await resp.text();
-      log('Сервер вернул ошибку:', resp.status, t);
-      throw new Error('Server error: ' + resp.status);
+      const t = await resp.text(); log('Ошибка от сервера:', resp.status, t); return { success:false, error: t };
     }
     const data = await resp.json();
-    if(data.success){
-      balance = (data.new_balance !== undefined) ? data.new_balance : balance + adEvent.reward;
-      updateBalanceUI();
-      log(`Начислено ${adEvent.reward} Coin. Новый баланс: ${balance}`);
-      // Уведомим родительский бот через Telegram API (опционально) — например, через серверный push
-    } else {
-      log('Сервер не подтвердил начисление: ' + JSON.stringify(data));
-      throw new Error('Verification failed');
-    }
+    // Пример ожидаемого ответа от сервера:
+    // { success: true, reward: 50, new_balance: 123, dailyCount: 3, lastWatchTs: 169..., streak: 2 }
+    return data;
   }catch(e){
-    log('Ошибка отправки подтверждения на сервер:', e.message || e);
-    alert('Не удалось подтвердить просмотр у сервера. Повторите позже.');
+    log('Ошибка при отправке на сервер:', e.message || e); return { success:false, error: e.message };
   }
 }
 
@@ -234,7 +392,6 @@ async function sendAdCompleteToServer(adEvent){
 // Запуск
 // =============================
 initWebApp();
-
 </script>
 </body>
 </html>
