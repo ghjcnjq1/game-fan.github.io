@@ -1,42 +1,745 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Мой первый сайт на GitHub!</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f0f8ff;
-            color: #333;
-            text-align: center;
-            padding: 50px;
-        }
-        h1 {
-            color: #007bff;
-        }
-        .button {
-            background-color: #007bff;
-            color: white;
-            padding: 10px 20px;
-            text-decoration: none;
-            border-radius: 5px;
-            display: inline-block;
-            margin-top: 20px;
-        }
-        .button:hover {
-            background-color: #0056b3;
-        }
-    </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>Idle Clicker — UI/UX Design Guide & Main Screen Demo</title>
+
+<!-- Roboto font -->
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    /* Palette */
+    --purple-dark: #6A0DAD;
+    --purple-light: #A100A1;
+    --lavender: #DDA0DD;
+    --white: #FFFFFF;
+    --black: #000000;
+
+    /* Derived */
+    --bg-gradient: linear-gradient(180deg,var(--purple-dark) 0%, var(--purple-light) 100%);
+    --panel-bg: rgba(106,13,173,0.22);
+    --panel-border: rgba(221,160,221,0.14);
+
+    /* Sizes */
+    --gap: 12px;
+    --radius: 14px;
+    --btn-h: 48px;
+    --shadow-glow: 0 10px 28px rgba(161,0,161,0.18);
+  }
+
+  /* Mobile-first base */
+  html,body{
+    height:100%;
+    margin:0;
+    font-family: "Roboto", system-ui, -apple-system, "Segoe UI", "Inter", "Helvetica", sans-serif;
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+    background: var(--bg-gradient);
+    color: var(--white);
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior-y: none;
+  }
+
+  /* Container: full viewport for Telegram style */
+  .app {
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:stretch;
+    position:relative;
+    overflow:hidden;
+  }
+
+  /* Canvas stars behind everything */
+  #stars {
+    position: absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    z-index:0;
+    pointer-events:none;
+    mix-blend-mode: normal;
+    opacity:0.6;
+  }
+
+  /* Content above canvas */
+  .viewport {
+    position:relative;
+    z-index:2;
+    padding:18px;
+    display:flex;
+    flex-direction:column;
+    gap:var(--gap);
+    min-height:100vh;
+    box-sizing:border-box;
+  }
+
+  /* Top counters row */
+  .topbar {
+    display:flex;
+    gap:12px;
+    align-items:center;
+    justify-content:space-between;
+  }
+
+  .counters {
+    display:flex;
+    gap:10px;
+    align-items:center;
+  }
+
+  .counter {
+    min-width:92px;
+    padding:10px 12px;
+    border-radius:12px;
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    box-shadow: var(--shadow-glow);
+    backdrop-filter: blur(6px);
+    display:flex;
+    gap:10px;
+    align-items:center;
+  }
+
+  .counter .icon {
+    width:28px;height:28px;
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;
+  }
+  .counter .value {
+    font-weight:600;
+    font-size:16px;
+    color:var(--white);
+  }
+
+  /* Center area with robot */
+  .main {
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:18px;
+    margin-top:6px;
+    padding-bottom:20px;
+  }
+
+  .robot-wrap {
+    width:220px;
+    height:220px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:50%;
+    background: radial-gradient(circle at 30% 20%, rgba(221,160,221,0.12), transparent 20%),
+                linear-gradient(180deg, rgba(255,255,255,0.03), rgba(0,0,0,0.02));
+    box-shadow: 0 20px 50px rgba(0,0,0,0.18), 0 6px 26px rgba(106,13,173,0.16);
+    position:relative;
+    overflow:visible;
+    transition: transform .18s ease;
+  }
+
+  /* Clickable area */
+  .robot-btn {
+    width:180px;
+    height:180px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    -webkit-tap-highlight-color: transparent;
+    position:relative;
+    outline:none;
+    border: none;
+    background: transparent;
+  }
+
+  /* Robot SVG pulse */
+  .robot {
+    width:120px;height:120px;
+    transform-origin:center;
+    animation: robot-pulse 2000ms ease-in-out infinite;
+    filter: drop-shadow(0 10px 30px rgba(161,0,161,0.14));
+  }
+
+  @keyframes robot-pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.03); }
+    100% { transform: scale(1); }
+  }
+
+  /* Ripple container */
+  .ripple-wrap { position:absolute; inset:0; border-radius:50%; overflow:hidden; pointer-events:none; }
+
+  .ripple {
+    position:absolute;
+    border-radius:50%;
+    transform:translate(-50%,-50%) scale(0.01);
+    opacity:0.9;
+    pointer-events:none;
+    animation: ripple 600ms forwards;
+    mix-blend-mode: screen;
+  }
+
+  @keyframes ripple {
+    to { transform:translate(-50%,-50%) scale(1.6); opacity:0; }
+  }
+
+  /* Upgrades grid */
+  .upgrades {
+    width:100%;
+    display:grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap:10px;
+    margin-top:6px;
+  }
+
+  .upgrade {
+    min-height:84px;
+    border-radius:12px;
+    padding:10px;
+    background: linear-gradient(180deg, rgba(106,13,173,0.18), rgba(161,0,161,0.06));
+    border:1px solid rgba(221,160,221,0.12);
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+    box-shadow: 0 6px 22px rgba(106,13,173,0.08);
+    transition: transform .18s ease, box-shadow .18s ease;
+    cursor:pointer;
+    color:var(--white);
+    user-select:none;
+  }
+
+  .upgrade:hover, .upgrade:focus {
+    transform:scale(1.05);
+    box-shadow: 0 16px 40px rgba(161,0,161,0.24);
+  }
+
+  .upgrade .title { font-weight:600; font-size:14px; }
+  .upgrade .subtitle { font-size:12px; opacity:0.9; }
+
+  /* Progress bar */
+  .progress {
+    height:8px;
+    width:100%;
+    background: rgba(255,255,255,0.06);
+    border-radius:8px;
+    overflow:hidden;
+    margin-top:8px;
+  }
+  .progress__fill {
+    height:100%;
+    width:40%; /* dynamic */
+    background: linear-gradient(90deg,var(--purple-light), var(--lavender));
+    transition: width .3s ease;
+  }
+
+  /* Buy energy pulsar */
+  .buy-energy {
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
+    padding:10px 14px;
+    border-radius:999px;
+    min-height:var(--btn-h);
+    background: linear-gradient(90deg, rgba(161,0,161,0.22), rgba(221,160,221,0.12));
+    border: 1px solid rgba(221,160,221,0.14);
+    box-shadow: var(--shadow-glow);
+    cursor:pointer;
+    transition: transform .16s ease;
+  }
+  .buy-energy .orb {
+    width:36px;height:36px;border-radius:50%;
+    background: radial-gradient(circle at 30% 25%, var(--lavender), var(--purple-light));
+    box-shadow: 0 6px 18px rgba(161,0,161,0.24), inset 0 -4px 12px rgba(0,0,0,0.08);
+    animation: pulse-btn 1400ms infinite;
+  }
+  @keyframes pulse-btn {
+    0% { transform:scale(1); opacity:1; }
+    50% { transform:scale(1.08); opacity:0.92; }
+    100% { transform:scale(1); opacity:1; }
+  }
+
+  /* Ad overlay/popup */
+  .ad-overlay {
+    position:fixed;
+    inset:0;
+    background: rgba(106,13,173,0.80);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    z-index:40;
+    padding:20px;
+    opacity:0;
+    pointer-events:none;
+    transition: opacity .18s ease;
+  }
+  .ad-overlay.show { opacity:1; pointer-events:auto; }
+
+  .ad-card {
+    width:92%;
+    max-width:420px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(0,0,0,0.05));
+    border-radius:14px;
+    padding:18px;
+    text-align:center;
+    border:1px solid rgba(221,160,221,0.12);
+    box-shadow: 0 18px 60px rgba(0,0,0,0.5);
+  }
+
+  .ad-play {
+    width:68px;height:68px;border-radius:50%;
+    display:inline-grid;place-items:center;
+    background: radial-gradient(circle at 30% 20%, var(--lavender), var(--purple-light));
+    box-shadow: 0 10px 34px rgba(161,0,161,0.22);
+    margin:10px auto;
+    animation: spin 4s linear infinite;
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  /* Accessibility focus */
+  .upgrade:focus, .robot-btn:focus, .buy-energy:focus { outline: 3px solid rgba(221,160,221,0.16); outline-offset:4px; }
+
+  /* Info / guide sections (lower part) */
+  .guide {
+    margin-top:8px;
+    background: rgba(0,0,0,0.06);
+    border-radius:12px;
+    padding:12px;
+    color:rgba(255,255,255,0.95);
+    font-size:13px;
+  }
+  .guide h3{ margin:6px 0 8px 0; font-size:15px; color:var(--white); }
+  .guide table{ width:100%; border-collapse:collapse; color:var(--white); font-size:13px; }
+  .guide table th, .guide table td{ text-align:left; padding:8px 6px; border-bottom:1px solid rgba(255,255,255,0.04); }
+  .mockups pre{ white-space:pre-wrap; font-family:monospace; font-size:12px; color:var(--white); background:transparent; margin:6px 0; }
+
+  /* Responsive: larger screens */
+  @media(min-width:720px){
+    .viewport { max-width:720px; margin:0 auto; padding:24px; }
+    .robot-wrap { width:320px; height:320px; }
+    .robot-btn { width:260px; height:260px; }
+    .robot { width:180px; height:180px; }
+    .upgrades { grid-template-columns: repeat(4, 1fr); }
+  }
+
+  /* Dark-mode toggle (optional): light theme variant (kept minimal) */
+  .light {
+    --bg-gradient: linear-gradient(180deg,#F6F5FF 0%, #F3E9F8 100%);
+    --panel-bg: rgba(255,255,255,0.86);
+    --panel-border: rgba(106,13,173,0.06);
+    color:var(--black);
+  }
+</style>
 </head>
 <body>
-    <h1>Привет, мир! Это мой сайт на GitHub Pages 🚀</h1>
-    <p>Создано с помощью Grok от xAI. Давай добавим больше контента?</p>
-    <a href="#about" class="button">Узнать больше</a>
-    
-    <section id="about" style="margin-top: 50px;">
-        <h2>О сайте</h2>
-        <p>Здесь можно добавить текст, изображения или даже JavaScript. Что хочешь добавить дальше?</p>
-    </section>
+  <div class="app" id="app">
+    <!-- stars canvas -->
+    <canvas id="stars" aria-hidden="true"></canvas>
+
+    <main class="viewport" role="main">
+      <!-- Top bar: counters and settings -->
+      <div class="topbar" role="region" aria-label="Статистика и настройки">
+        <div class="counters" aria-hidden="false">
+          <div class="counter" role="status" aria-live="polite" aria-label="Кристаллы">
+            <div class="icon" aria-hidden="true">
+              <!-- crystal SVG -->
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M12 2l4.9 6.4L12 22 7.1 8.4 12 2z" fill="url(#g1)"></path>
+                <defs><linearGradient id="g1" x1="0" x2="1"><stop offset="0" stop-color="#A100A1"/><stop offset="1" stop-color="#DDA0DD"/></linearGradient></defs>
+              </svg>
+            </div>
+            <div class="value" id="crystals">1 234</div>
+          </div>
+
+          <div class="counter" role="status" aria-live="polite" aria-label="Энергия">
+            <div class="icon" aria-hidden="true">
+              <!-- energy/star SVG -->
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M12 2l2.4 5.5L20 10l-4 3.1L17 20l-5-2.6L7 20l1-6.9L4 10l5.6-2.5L12 2z" fill="#DDA0DD"></path>
+              </svg>
+            </div>
+            <div class="value" id="energy">48</div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button id="themeToggle" class="buy-energy" aria-pressed="false" aria-label="Переключить тему">
+            <div class="orb" aria-hidden="true"></div>
+            <div style="font-size:13px;color:var(--white);font-weight:600;">Тема</div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Main clickable robot -->
+      <section class="main" aria-label="Главный экран игры">
+        <div class="robot-wrap" aria-hidden="false">
+          <button class="robot-btn" id="robotBtn" aria-label="Нажмите чтобы собрать кристаллы" title="Tap to collect" >
+            <!-- SVG robot (simplified futuristic robot icon) -->
+            <svg class="robot" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="false">
+              <defs>
+                <linearGradient id="rg1" x1="0" x2="1">
+                  <stop offset="0" stop-color="#A100A1"/>
+                  <stop offset="1" stop-color="#DDA0DD"/>
+                </linearGradient>
+                <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+                  <feGaussianBlur stdDeviation="4.5" result="coloredBlur"/>
+                  <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                </filter>
+              </defs>
+              <!-- body -->
+              <g filter="url(#glow)">
+                <rect x="28" y="36" rx="10" ry="10" width="64" height="48" fill="url(#rg1)" opacity="0.98"></rect>
+                <circle cx="60" cy="54" r="10" fill="#FFF"></circle>
+                <!-- antenna -->
+                <rect x="56" y="20" width="8" height="18" rx="3" fill="#EEE"></rect>
+                <circle cx="60" cy="16" r="5" fill="#DDA0DD"></circle>
+                <!-- legs -->
+                <rect x="36" y="84" width="12" height="8" rx="3" fill="#C9C"></rect>
+                <rect x="72" y="84" width="12" height="8" rx="3" fill="#C9C"></rect>
+              </g>
+            </svg>
+
+            <span class="ripple-wrap" id="rippleWrap" aria-hidden="true"></span>
+          </button>
+        </div>
+
+        <!-- Upgrades grid -->
+        <div class="upgrades" role="list" aria-label="Улучшения">
+          <div class="upgrade" role="button" tabindex="0" aria-label="Ускорение клика — Уровень 1">
+            <div>
+              <div class="title">Click Speed</div>
+              <div class="subtitle">+8% per lvl</div>
+            </div>
+            <div>
+              <div class="progress" aria-hidden="true"><div class="progress__fill" style="width:40%"></div></div>
+              <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:12px;">
+                <span>LV 7</span><span>Цена: 120</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="upgrade" role="button" tabindex="0" aria-label="Улучшение дропа — Уровень 2">
+            <div>
+              <div class="title">Drop Rate</div>
+              <div class="subtitle">+12% chance</div>
+            </div>
+            <div>
+              <div class="progress" aria-hidden="true"><div class="progress__fill" style="width:62%"></div></div>
+              <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:12px;">
+                <span>LV 12</span><span>Цена: 560</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="upgrade" role="button" tabindex="0" aria-label="Магнит — Уровень 3">
+            <div>
+              <div class="title">Magnet</div>
+              <div class="subtitle">Автосбор</div>
+            </div>
+            <div>
+              <div class="progress" aria-hidden="true"><div class="progress__fill" style="width:18%"></div></div>
+              <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:12px;">
+                <span>LV 3</span><span>Цена: 90</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Buy energy / ad action -->
+        <div style="display:flex;gap:12px;margin-top:8px;align-items:center;">
+          <button class="buy-energy" id="buyEnergyBtn" aria-label="Купить за энергию">
+            <div class="orb" aria-hidden="true"></div>
+            <div style="font-weight:600;font-size:14px;">Купить уровень — 8 Энергии</div>
+          </button>
+
+          <button id="watchAd" class="buy-energy" aria-label="Посмотреть рекламу за буст">
+            <div style="width:36px;height:36;border-radius:50%;display:grid;place-items:center;background:transparent;">
+              <!-- play icon -->
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 3v18l15-9L5 3z" fill="#DDA0DD"></path></svg>
+            </div>
+            <div style="font-weight:600;font-size:14px;">Посмотреть рекламу</div>
+          </button>
+        </div>
+      </section>
+
+      <!-- Guide / specs lower -->
+      <section class="guide" aria-label="UI/UX Design Guide">
+        <h3>Описание палитры и стиля</h3>
+        <p>
+          Цветовая палитра строится вокруг глубоких фиолетовых градиентов (от <strong>#6A0DAD</strong> к <strong>#A100A1</strong>),
+          создающих футуристическую, космическую атмосферу. Акценты и хайлайты — <strong>#DDA0DD</strong> (лавандовый) для подсветки кнопок,
+          трофеев и эффектов. Текст всегда контрастный: белый (<strong>#FFFFFF</strong>) на тёмных панелях или чёрный (<strong>#000000</strong>)
+          на светлых, чтобы обеспечить WCAG контраст >4.5:1. Шрифт — Roboto/Inter, размеры 14–24px. Дизайн следует правилу 70% фиолетовый,
+          20% нейтральные элементы и 10% акценты, чтобы обеспечить сильную визуальную идентичность без перегруженности.
+        </p>
+
+        <h3>Таблица элементов</h3>
+        <table>
+          <thead><tr><th>Элемент</th><th>Цвет/Градиент</th><th>Анимация</th></tr></thead>
+          <tbody>
+            <tr><td>Фон</td><td>linear-gradient(#6A0DAD → #A100A1) + звёзды</td><td>медленный парраллакс</td></tr>
+            <tr><td>Робот (центральный)</td><td>градиенты + лавандовые блики</td><td>пульсация (scale)</td></tr>
+            <tr><td>Кнопки улучшений</td><td>фиолетный градиент</td><td>hover: scale(1.05) + glow</td></tr>
+            <tr><td>Прогресс-бар</td><td>fill: linear-gradient(#A100A1 → #DDA0DD)</td><td>width transition 0.3s</td></tr>
+            <tr><td>Реклама popup</td><td>overlay rgba(106,13,173,0.8)</td><td>play spin, fadeIn</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Mockups (4 экрана)</h3>
+        <div class="mockups">
+<pre>
+1) Главный экран
+[Topbar: Crystals | Energy] 
+[   Large pulsating Robot (clickable)   ]
+[ 3x Upgrades grid ]
+[Buy energy] [Watch ad]
+
+2) Магазин уровней
+[Grid 3xN карточек уровней]
+[Каждая: preview, прогресс-бар, кнопка "Купить за энергию"]
+
+3) Мир / Лидерборд
+[Theme background per world (Earth/Cosmos)]
+[Leaderboard: list of players, lavendar trophy icons]
+
+4) Реклама-буст popup
+[Overlay (80% purple) -> Card with play-button spin]
+</pre>
+        </div>
+
+        <h3>Технические детали и доступность</h3>
+        <ul>
+          <li>CSS: Flexbox + Grid; CSS variables: --purple-dark / --purple-light.</li>
+          <li>Анимации — короткие (180–300ms) для отзывчивости; JS для ripple и конфетти (particles.js можно подключить).</li>
+          <li>Accessibility: ARIA-labels для кнопок, keyboard focus, контрасты > 4.5:1.</li>
+          <li>Touch-friendly: target size &gt;44px, mobile-first layout, viewport 100vh.</li>
+        </ul>
+
+        <h3>Советы по интеграции в Telegram Web App</h3>
+        <p>
+          Инициализируйте Web App через <code>window.Telegram.WebApp</code>. Для авто-темы используйте
+          <code>Telegram.WebApp.themeParams</code> (если доступно) и переключайте класс <code>.light</code> в корне.
+          Для тактильной отдачи — используйте <code>navigator.vibrate([20])</code> и (при доступности) <code>Telegram.WebApp.HapticFeedback</code>.
+          При старте вызовите <code>Telegram.WebApp.init()</code> и читайте <code>initData</code> для безопасной интеграции.
+        </p>
+      </section>
+    </main>
+
+    <!-- Ad overlay -->
+    <div class="ad-overlay" id="adOverlay" role="dialog" aria-modal="true" aria-hidden="true">
+      <div class="ad-card" role="document" aria-label="Реклама буста">
+        <h3 style="color:var(--white);margin:4px 0;">Посмотрите видео — получите буст</h3>
+        <div class="ad-play" role="button" aria-label="Запустить видео"></div>
+        <p style="color:rgba(255,255,255,0.95);margin-top:6px;">+50% к сбору кристаллов на 10 минут</p>
+        <div style="display:flex;gap:10px;justify-content:center;margin-top:14px;">
+          <button class="buy-energy" id="adClose" aria-label="Закрыть рекламу">Отмена</button>
+          <button class="buy-energy" id="adWatch" aria-label="Смотреть сейчас">Смотреть</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* --------------------------
+   Stars canvas (simple css particles)
+   -------------------------- */
+(function(){
+  const canvas = document.getElementById('stars');
+  const ctx = canvas.getContext('2d');
+  let w = canvas.width = innerWidth;
+  let h = canvas.height = innerHeight;
+  const stars = [];
+  const STAR_COUNT = Math.round((w*h)/42000); // density
+
+  function rand(min,max){ return Math.random()*(max-min)+min; }
+
+  function initStars(){
+    stars.length=0;
+    for(let i=0;i<STAR_COUNT;i++){
+      stars.push({
+        x: Math.random()*w,
+        y: Math.random()*h,
+        r: Math.random()*1.6 + 0.2,
+        a: Math.random()*0.9 + 0.1,
+        vx: (Math.random()-0.5)*0.05
+      });
+    }
+  }
+  function resize(){ w = canvas.width = innerWidth; h = canvas.height = innerHeight; initStars(); }
+  window.addEventListener('resize', resize);
+  resize();
+  function draw(){
+    ctx.clearRect(0,0,w,h);
+    // subtle nebula gradient overlay
+    const g = ctx.createLinearGradient(0,0,w,h);
+    g.addColorStop(0, 'rgba(161,0,161,0.08)');
+    g.addColorStop(1, 'rgba(161,0,161,0.02)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0,0,w,h);
+
+    for(const s of stars){
+      s.x += s.vx;
+      if(s.x < -10) s.x = w + 10;
+      if(s.x > w+10) s.x = -10;
+      ctx.beginPath();
+      ctx.globalAlpha = s.a;
+      ctx.fillStyle = "rgba(255,255,255,0.8)";
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    requestAnimationFrame(draw);
+  }
+  requestAnimationFrame(draw);
+})();
+
+/* --------------------------
+   Click logic: ripple, crystals increment, haptics
+   -------------------------- */
+(function(){
+  const robotBtn = document.getElementById('robotBtn');
+  const rippleWrap = document.getElementById('rippleWrap');
+  const crystalsEl = document.getElementById('crystals');
+  const energyEl = document.getElementById('energy');
+  const themeToggle = document.getElementById('themeToggle');
+  const adOverlay = document.getElementById('adOverlay');
+  const watchAdBtn = document.getElementById('watchAd');
+  const adClose = document.getElementById('adClose');
+  const adWatch = document.getElementById('adWatch');
+  let crystals = parseInt(crystalsEl.textContent.replace(/\s/g,'')) || 0;
+  let energy = parseInt(energyEl.textContent) || 0;
+
+  function updateCounters(){
+    crystalsEl.textContent = crystals.toLocaleString();
+    energyEl.textContent = energy;
+  }
+
+  function doHaptic(){
+    try {
+      // Telegram Haptic
+      if(window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback){
+        window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
+      } else if(navigator.vibrate){
+        navigator.vibrate(12);
+      }
+    } catch(e){}
+  }
+
+  robotBtn.addEventListener('click', function(e){
+    // ripple
+    const rect = robotBtn.getBoundingClientRect();
+    const cx = e.clientX - rect.left;
+    const cy = e.clientY - rect.top;
+    const rip = document.createElement('span');
+    rip.className = 'ripple';
+    rip.style.left = cx + 'px';
+    rip.style.top = cy + 'px';
+    rip.style.width = rip.style.height = Math.max(rect.width, rect.height)*1.2 + 'px';
+    rip.style.background = 'radial-gradient(circle at 30% 30%, rgba(221,160,221,0.28), rgba(161,0,161,0.12))';
+    rippleWrap.appendChild(rip);
+    rip.addEventListener('animationend', ()=> rip.remove());
+
+    // increment crystals (simple example)
+    crystals += Math.floor(1 + Math.random()*3);
+    updateCounters();
+
+    // small visual bounce
+    robotBtn.animate([{ transform:'scale(1)' }, { transform:'scale(0.98)' }, { transform:'scale(1)' }], { duration:160, easing:'ease-out' });
+
+    doHaptic();
+  });
+
+  // theme toggle (simulate Telegram theme)
+  themeToggle.addEventListener('click', function(){
+    const root = document.getElementById('app');
+    if(root.classList.contains('light')){
+      root.classList.remove('light');
+      this.setAttribute('aria-pressed','false');
+    } else {
+      root.classList.add('light');
+      this.setAttribute('aria-pressed','true');
+    }
+  });
+
+  // watch ad -> open overlay
+  watchAdBtn.addEventListener('click', function(){
+    adOverlay.classList.add('show');
+    adOverlay.setAttribute('aria-hidden','false');
+  });
+  adClose.addEventListener('click', function(){
+    adOverlay.classList.remove('show');
+    adOverlay.setAttribute('aria-hidden','true');
+  });
+  adWatch.addEventListener('click', function(){
+    // Simulate watch ad flow: grant boost then close
+    crystals += Math.floor(50 + Math.random()*50);
+    updateCounters();
+    adOverlay.classList.remove('show');
+    adOverlay.setAttribute('aria-hidden','true');
+    // show quick confetti (simple)
+    confettiBurst();
+  });
+
+  // simple confetti in purple tones (temporary)
+  function confettiBurst(){
+    const root = document.createElement('div');
+    root.style.position='fixed';
+    root.style.left=0; root.style.top=0;
+    root.style.width='100%'; root.style.height='100%';
+    root.style.pointerEvents='none';
+    root.style.zIndex=60;
+    document.body.appendChild(root);
+    for(let i=0;i<40;i++){
+      const p = document.createElement('div');
+      p.style.position='absolute';
+      p.style.left = (50 + (Math.random()-0.5)*60) + '%';
+      p.style.top = '30%';
+      p.style.width = p.style.height = (6+Math.random()*8) + 'px';
+      p.style.borderRadius='2px';
+      p.style.background = Math.random()>0.6 ? '#DDA0DD' : (Math.random()>0.5? '#A100A1' : '#6A0DAD');
+      p.style.transform = `translateY(0) rotate(${Math.random()*360}deg)`;
+      root.appendChild(p);
+      const dx = (Math.random()-0.5)*600;
+      const dy = 400 + Math.random()*200;
+      p.animate([
+        { transform: `translate(0,0) rotate(0deg)`, opacity:1 },
+        { transform: `translate(${dx}px, ${dy}px) rotate(${Math.random()*720}deg)`, opacity:0 }
+      ], { duration: 900 + Math.random()*800, easing:'cubic-bezier(.2,.8,.2,1)' });
+      setTimeout(()=> p.remove(), 1500);
+    }
+    setTimeout(()=> root.remove(), 1800);
+  }
+
+  // Keyboard accessibility: space/enter triggers robot
+  robotBtn.addEventListener('keydown', function(e){
+    if(e.key === 'Enter' || e.key === ' '){
+      e.preventDefault();
+      robotBtn.click();
+    }
+  });
+
+  // Init telegram integration hints
+  (function tryTelegramInit(){
+    if(window.Telegram && window.Telegram.WebApp){
+      try {
+        window.Telegram.WebApp.ready();
+        // prefer Telegram theme params if provided
+        const tp = window.Telegram.WebApp.themeParams || {};
+        // Example: if bg_color is light, toggle light mode
+        if(tp.bg_color && (tp.bg_color === '#ffffff' || tp.bg_color === '#FFF' || tp.bg_color === 'white')){
+          document.getElementById('app').classList.add('light');
+        }
+      } catch(e){}
+    }
+  })();
+
+})();
+</script>
 </body>
 </html>
